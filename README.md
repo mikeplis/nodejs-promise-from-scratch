@@ -1,0 +1,1 @@
+http://thecodebarbarian.com/write-your-own-node-js-promise-library-from-scratch
