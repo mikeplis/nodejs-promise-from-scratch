@@ -22,8 +22,18 @@ class MyPromise {
             if (this.$state !== 'PENDING') {
                 return;
             }
-            // There's a subtle difference between 'fulfilled' and 'resolved'
-            // that you'll learn about later.
+
+            // If `res` is a "thenable", lock in this promise to match the
+            // resolved or rejected state of the thenable.
+            const then = res != null ? res.then : null;
+            if (typeof then === 'function') {
+                // In this case, the promise is "resolved", but still in the 'PENDING'
+                // state. This is what the ES6 spec means when it says "A resolved promise
+                // may be pending, fulfilled or rejected" in
+                // http://www.ecma-international.org/ecma-262/6.0/#sec-promise-objects
+                return then(resolve, reject);
+            }
+
             this.$state = 'FULFILLED';
             this.$internalValue = res;
             // If somebody called `.then()` while this promise was pending, need
@@ -31,6 +41,8 @@ class MyPromise {
             for (const { onFulfilled } of this.$chained) {
                 onFulfilled(res);
             }
+
+            return res;
         };
         const reject = err => {
             if (this.$state !== 'PENDING') {
