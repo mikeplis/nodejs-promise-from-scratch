@@ -71,6 +71,7 @@ class MyPromise {
     // if the promise is rejected. For now, you can think of 'fulfilled' and
     // 'resolved' as the same thing.
     then(onFulfilled, onRejected) {
+        console.log('Then', onFulfilled, onRejected, new Error().stack);
         return new MyPromise((resolve, reject) => {
             // Ensure that errors in `onFulfilled()` and `onRejected()` reject the
             // returned promise, otherwise they'll crash the process.
@@ -100,3 +101,11 @@ class MyPromise {
         });
     }
 }
+
+async function run() {
+    const start = Date.now();
+    await new MyPromise(resolve => setTimeout(() => resolve(), 100));
+    console.log('Elapsed time', Date.now() - start);
+}
+
+run().catch(error => console.error(error.stack));
