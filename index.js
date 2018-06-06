@@ -59,12 +59,32 @@ class MyPromise {
     // if the promise is rejected. For now, you can think of 'fulfilled' and
     // 'resolved' as the same thing.
     then(onFulfilled, onRejected) {
-        if (this.$state === 'FULFILLED') {
-            onFulfilled(this.$internalValue);
-        } else if (this.$state === 'REJECTED') {
-            onRejected(this.$internalValue);
-        } else {
-            this.$chained.push({ onFulfilled, onRejected });
-        }
+        return new MyPromise((resolve, reject) => {
+            // Ensure that errors in `onFulfilled()` and `onRejected()` reject the
+            // returned promise, otherwise they'll crash the process.
+            const _onFulfilled = res => {
+                try {
+                    // If `onFulfilled()` returns a promise, trust `resolve()` to handle
+                    // it correctly.
+                    resolve(onFulfilled(res));
+                } catch (err) {
+                    reject(err);
+                }
+            };
+            const _onRejected = err => {
+                try {
+                    reject(onRejected(err));
+                } catch (_err) {
+                    reject(_err);
+                }
+            };
+            if (this.$state === 'FULFILLED') {
+                _onFulfilled(this.$internalValue);
+            } else if (this.$state === 'REJECTED') {
+                _onRejected(this.$internalValue);
+            } else {
+                this.$chained.push({ onFulfilled: _onFulfilled, onRejected: _onRejected });
+            }
+        });
     }
 }
